@@ -1,4 +1,5 @@
 import sys
+import os
 
 
 def quarters(next_quarter=0.0):
@@ -35,3 +36,7 @@ while len(result) < 5:
         x = generator.send(1.0)
     result.append(x)
 print(result)  # [0.0, 0.25, 1.0, 1.25, 1.5]
+
+
+def get_files(names):
+    return (file for file in names if os.path.isfile(file))
