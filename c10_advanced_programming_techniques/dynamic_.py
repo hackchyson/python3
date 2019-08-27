@@ -23,19 +23,6 @@ exec(code, context)
 # that inside the exec() call, math.pi is accessible.
 
 
-# In some cases it is convenient to provide the entire global context to exec() .
-# This can be done by passing the dictionary returned by the globals() function.
-# One disadvantage of this approach is that any objects created in the exec() call
-# would be added to the global dictionary. A solution is to copy the global context
-# into a dictionary, for example, context = globals().copy() . This still gives exec()
-# access to imported modules and the variables and other objects that are in
-# scope, and because we have copied, any changes to the context made inside the
-# exec() call are kept in the context dictionary and are not propagated to the glob-
-# al environment. (It would appear to be more secure to use copy.deepcopy() , but
-# if security is a concern it is best to avoid exec() altogether.) We can also pass
-# the local context, for example, by passing locals() as a third argument—this
-# makes objects in the local scope accessible to the code executed by exec() .
-
 area_of_sphere = context["area_of_sphere"]
 area = area_of_sphere(5)
 print(area)
