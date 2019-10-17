@@ -61,7 +61,7 @@ def load_module_v2():
     for name in os.listdir(os.path.dirname(__file__) or '.'):
         if name.endswith('.py') and 'magic' in name.lower():
             name = os.path.splitext(name)[0]  # remove extension
-            if name.isidentifier() and name not in sys.modules:  # isidentifier: if a string is a valid identifier
+            if name.isidentifier() and name not in sys.modules:
                 try:
                     exec("import " + name)
                     modules.append(sys.modules[name])
@@ -77,7 +77,7 @@ def load_module_v3():
     for name in os.listdir(os.path.dirname(__file__) or '.'):
         if name.endswith('.py') and 'magic' in name.lower():
             name = os.path.splitext(name)[0]  # remove extension
-            if name.isidentifier() and name not in sys.modules:  # isidentifier: if a string is a valid identifier
+            if name.isidentifier() and name not in sys.modules:
                 try:
                     module = __import__(name)
                     modules.append(module)
