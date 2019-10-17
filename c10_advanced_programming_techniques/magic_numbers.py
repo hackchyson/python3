@@ -28,16 +28,22 @@ def load_modules():
                 try:
                     fh = open(filename, 'r', encoding='utf8')
                     code = fh.read()
+                    # When we call type() it returns the type object
+                    # of the object it is given. So if we called type(1) we would get int back. If we
+                    # print the type object we just get something human readable like “int”, but if
+                    # we call the type object as a function, we get an object of that type back. For
+                    # example, we can get the integer 5 in variable x by writing x = 5 , or x = int(5) ,
+                    # or x = type(0)(5) , or int_type = type(0); x = int_type(5) . In this case we’ve used
+                    # type(sys) and sys is a module, so we get back the module type object (essentially
+                    # the same as a class object), and can use it to create a new module with the giv-
+                    # en name.
                     module = type(sys)(name)
-                    # sys is a module os we get the module type object
-                    # and can use it to create a new module with the given name
-                    # name() stands for function call
-                    # name stands for variable
-                    sys.modules[name] = module
+
                     # Once we have a new (empty) module, we add it to the global list of modules
                     # to prevent the module from being accidentally reimported.
                     # This is done before calling exec() to more closely mimic the behavior of the import statement.
-                    exec(code, module.__dict__)
+                    sys.modules[name] = module
+                    exec(code, module.__dict__)  # module.__dict__ is environment
                     modules.append(module)
                 except (EnvironmentError, SyntaxError) as err:
                     sys.modules.pop(name, None)
@@ -61,6 +67,7 @@ def load_module_v2():
                     modules.append(sys.modules[name])
                 except SyntaxError as err:
                     print(err)
+    return modules
 
 
 def load_module_v3():
@@ -76,6 +83,7 @@ def load_module_v3():
                     modules.append(module)
                 except SyntaxError as err:
                     print(err)
+    return modules
 
 
 # None of the techniques shown here handles packages or modules in different
@@ -95,7 +103,7 @@ def get_function(module, function_name):
     # no attribute lookup takes place at all.
 
     # The technique used for caching the get_function() ’s return value for a given set
-    # of arguments is called memoizing.
+    # of arguments is called memorizing.
     function = get_function.cache.get((module, function_name), None)
     if function is None:
         try:
@@ -112,7 +120,7 @@ get_function.cache = {}
 
 
 def main():
-    modules = load_modules()
+    modules = load_module_v3()
     get_file_type_functions = []
     for module in modules:
         get_file_type = get_function(module, "get_file_type")
@@ -120,6 +128,7 @@ def main():
             get_file_type_functions.append(get_file_type)
 
     # This loop iterates over every file listed on the command line and for each one reads its first 1 000 bytes.
+    # for file in get_files(sys.argv[1:]):
     for file in get_files(sys.argv[1:]):
         fh = None
         try:
@@ -138,3 +147,7 @@ def main():
         finally:
             if fh is not None:
                 fh.close()
+
+
+if __name__ == '__main__':
+    main()

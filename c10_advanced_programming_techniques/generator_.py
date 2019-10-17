@@ -32,7 +32,7 @@ result = []
 generator = quarters()
 while len(result) < 5:
     x = next(generator)
-    if abs(x - 0.5) < sys.float_info.epsilon:
+    if abs(x - 0.5) < sys.float_info.epsilon:  # x == 0.5
         x = generator.send(1.0)
     result.append(x)
 print(result)  # [0.0, 0.25, 1.0, 1.25, 1.5]
@@ -40,3 +40,7 @@ print(result)  # [0.0, 0.25, 1.0, 1.25, 1.5]
 
 def get_files(names):
     return (file for file in names if os.path.isfile(file))
+
+
+for i in get_files(os.listdir('.')):
+    print(i)
