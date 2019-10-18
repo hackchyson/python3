@@ -95,3 +95,4 @@ if __name__ == '__main__':
     print(image.__dict__)
     print(image.colors)
     print(image.height)
+    # print(image.__background)  # AttributeError: 'Image' object has no attribute '__background'
