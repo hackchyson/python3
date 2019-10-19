@@ -24,6 +24,10 @@ class FuzzyBool:
     def __lt__(self, other):
         return self.__value < other.__value
 
+    def __repr__(self):
+        return ("{0}({1})".format(self.__class__.__name__,
+                                  self.__value))
+
 
 if __name__ == '__main__':
     sl = SortedList([1, 2, 3])
@@ -34,7 +38,7 @@ if __name__ == '__main__':
     for i in sl:
         print(i)
 
-    fb1 = FuzzyBool(0.5)  # todo TypeError: 'NoneType' object is not callable
-
-    # fb2 = FuzzyBool(.7)
-    # print(fb1 < fb2, fb1 <= fb2, fb2 == fb2, fb1 != fb2, fb1 > fb2, fb1 >= fb2)
+    fb1 = FuzzyBool(0.5)
+    fb2 = FuzzyBool(.7)
+    print(fb1, fb2)
+    print(fb1 < fb2, fb1 <= fb2, fb2 == fb2, fb1 != fb2, fb1 > fb2, fb1 >= fb2)
