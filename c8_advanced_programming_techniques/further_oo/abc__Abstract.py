@@ -20,6 +20,9 @@ class Undo(metaclass=abc.ABCMeta):
     def add_undo(self, undo):
         self.__undos.append(undo)
 
+    def clear(self):
+        self.__undos = []
+
 
 class Stack(Undo):
     def __init__(self):
