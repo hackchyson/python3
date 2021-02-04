@@ -18,7 +18,7 @@ def get_forenames_and_surnames():
     # since they can be typed without the need for escaping, and they work on all platforms (including Windows).
     # If we have a path we want to present to the user in, say, variable path,
     # we can always import the os module and call path.replace("/", os.sep) to replace forward slashes
-    # with the platform-specific directory separator.
+    # with the platform-specific book_dir separator.
     for names, filename in ((forenames, 'data/forenames.txt'),
                             (surnames, 'data/surnames.txt')):
         for name in open(filename):

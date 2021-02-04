@@ -91,7 +91,7 @@ def load_module_v3():
 
 def get_function(module, function_name):
     # If hundreds of files were being processed (e.g., due to using *.* in the C:\windows
-    # directory), we don’t want to go through the lookup process for every module
+    # book_dir), we don’t want to go through the lookup process for every module
     # for every file. So immediately after defining the get_function() function, we
     # add an attribute to the function, a dictionary called cache . (In general, Python
     # allows us to add arbitrary attributes to arbitrary objects.) The first time that
