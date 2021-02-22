@@ -6,15 +6,13 @@ class Undo(metaclass=abc.ABCMeta):
     def __init__(self):
         self.__undos = []
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def can_undo(self):
         return bool(self.__undos)
 
     @abc.abstractmethod
     def undo(self):
         assert self.__undos, 'nothing left to undo'
-        # We must pass self because the method is being called as a function
-        # and not as a method.
         self.__undos.pop()(self)
 
     def add_undo(self, undo):

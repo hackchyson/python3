@@ -1,13 +1,8 @@
 import abc
 
 
-# interface
-
-# The TextFilter ABC provides no functionality at all; it exists purely to define
-# an interface, in this case an is_transformer read-only property and a __call__()
-# method, that all its subclasses must provide.
 class TextFilter(metaclass=abc.ABCMeta):
-    @abc.abstractproperty
+    @abc.abstractmethod
     def is_tranformer(self):
         raise NotImplementedError()
 
@@ -102,13 +97,15 @@ class RunLengthDecoder(TextFilter):
 if __name__ == '__main__':
     vowel_counter = CharCounter()
     count = vowel_counter('dog fish and cat fish', 'aeiou')
-    print(count)
+    print(count)  # 5
 
     print('=' * 100)
-    text = 'Hack Chyson ======================= Hello hellooooooooooooooooooooooooooooooo'
-    rle_encoder = RunLengthEncoder()
-    rle_text = rle_encoder(text)
-    print(rle_text)
-    rle_decoder = RunLengthDecoder()
-    original_text = rle_decoder(rle_text)
-    assert text == original_text
+    text = 'Mack Chyson ======================='
+    encoder = RunLengthEncoder()
+    encoded_text = encoder(text)
+    print(encoded_text)  # b'Mack Chyson \x00\x17='
+    decoder = RunLengthDecoder()
+    original_text = decoder(encoded_text)
+    print(original_text)
+    # Mack Chyson =======================
+

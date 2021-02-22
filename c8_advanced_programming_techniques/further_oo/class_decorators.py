@@ -1,19 +1,88 @@
-from chyson.decorators.decorators import delegate, complete_comparisons
-
-_identitiy = lambda x: x
+_identity = lambda x: x
 
 
-@delegate('__list', ('pop', '__delitem__', '__getitem__', '__iter__', '__reversed__', '__len__', '__str__'))
 class SortedList:
     def __init__(self, sequence=None, key=None):
-        self.__key = key or _identitiy
-        assert hasattr(self.__key, '__call__')
+        self.__key = key or _identity
+        assert hasattr(self.__key, "__call__")
         if sequence is None:
             self.__list = []
-        elif isinstance(sequence, SortedList) and sequence.key == self.__key:
+        elif (isinstance(sequence, SortedList) and
+              sequence.key == self.__key):
             self.__list = sequence.__list[:]
         else:
             self.__list = sorted(list(sequence), key=self.__key)
+
+    def pop(self, index=-1):
+        return self.__list.pop(index)
+
+    def __delitem__(self, index):
+        del self.__list[index]
+
+    def __getitem__(self, index):
+        return self.__list[index]
+
+    def __setitem__(self, index, value):
+        raise TypeError("use add() to insert a value and rely on "
+                        "the list to put it in the right place")
+
+    def __iter__(self):
+        return iter(self.__list)
+
+    def __reversed__(self):
+        return reversed(self.__list)
+
+    def __len__(self):
+        return len(self.__list)
+
+    def __str__(self):
+        return str(self.__list)
+
+
+_identity = lambda x: x
+
+
+def delegate(attribute_name, method_names):
+    def decorator(cls):
+        nonlocal attribute_name
+        if attribute_name.startswith('__'):
+            attribute_name = '_' + cls.__name__ + attribute_name
+        for name in method_names:
+            setattr(cls, name, eval("lambda self, *a, **kw: "
+                                    f"self.{attribute_name}.{name}(*a, **kw)"))
+        return cls
+
+    return decorator
+
+
+@delegate("__list", ("pop", "__delitem__", "__getitem__",
+                     "__iter__", "__reversed__", "__len__", "__str__"))
+class SortedList:
+
+    def __init__(self, sequence=None, key=None):
+        self.__key = key or _identity
+        assert hasattr(self.__key, "__call__")
+        if sequence is None:
+            self.__list = []
+        elif (isinstance(sequence, SortedList) and
+              sequence.key == self.__key):
+            self.__list = sequence.__list[:]
+        else:
+            self.__list = sorted(list(sequence), key=self.__key)
+
+
+def complete_comparisons(cls):
+    assert cls.__lt__ is not object.__lt__, (
+        f'{cls.__name__} must define < and ideally =='
+    )
+    if cls.__eq__ is object.__eq__:
+        cls.__eq__ = lambda self, other: (
+            not (cls.__lt__(self, other) or cls.__lt__(other, self))
+        )
+    cls.__ne__ = lambda self, other: not cls.__eq__(self, other)
+    cls.__gt__ = lambda self, other: cls.__lt__(other, self)
+    cls.__le__ = lambda self, other: not cls.__lt__(other, self)
+    cls.__ge__ = lambda self, other: not cls.__lt__(self, other)
 
 
 @complete_comparisons
@@ -23,22 +92,3 @@ class FuzzyBool:
 
     def __lt__(self, other):
         return self.__value < other.__value
-
-    def __repr__(self):
-        return ("{0}({1})".format(self.__class__.__name__,
-                                  self.__value))
-
-
-if __name__ == '__main__':
-    sl = SortedList([1, 2, 3])
-    print(sl)
-    print(sl.pop())
-    print(len(sl))
-    print(list(reversed(sl)))
-    for i in sl:
-        print(i)
-
-    fb1 = FuzzyBool(0.5)
-    fb2 = FuzzyBool(.7)
-    print(fb1, fb2)
-    print(fb1 < fb2, fb1 <= fb2, fb2 == fb2, fb1 != fb2, fb1 > fb2, fb1 >= fb2)

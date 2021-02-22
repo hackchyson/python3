@@ -26,19 +26,39 @@ class LoadSave:
                 setattr(self, name, value)
 
 
-# This can be very convenient and works especially well when the inher-
-# ited classes have no overlapping APIs.
 class FileStack(Undo, LoadSave):
     def __init__(self, filename):
-        # Instead of using super() in the __init__() method we must spec-
-        # ify the base classes that we initialize since super() cannot guess our intentions.
         Undo.__init__(self)
         LoadSave.__init__(self, filename, '__stack')
         self.__stack = []
 
     def load(self):
         super().load()
-        # for load() we must clear the undo stack after loading.
-        # self.clear() # 1
-        # super().clear() # 2
-        Undo.clear(self)  # 3
+        Undo.clear(self)
+
+    # The following is same to Stack
+    @property
+    def can_undo(self):
+        return super().can_undo
+
+    def undo(self):
+        super().undo()
+
+    def push(self, item):
+        self.__stack.append(item)
+        self.add_undo(lambda self: self.__stack.pop())
+
+    def pop(self):
+        item = self.__stack.pop()
+        self.add_undo(lambda self: self.__stack.append(item))
+        return item
+
+    def top(self):
+        assert self.__stack, "Stack is empty"
+        return self.__stack[-1]
+
+    def __eq__(self, other):
+        return self.__stack == other.__stack
+
+    def __str__(self):
+        return str(self.__stack)

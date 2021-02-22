@@ -25,8 +25,8 @@ class Point:
 
 class Ord:
     def __getattr__(self, item):
-        # builtin.ord() works for any characters
-        # class Ord work for characters that is a valid identifier
+        # builtin.ord() is used to avoid ord is used my the user
+        # like ord = Ord()
         return builtins.ord(item)
 
 
@@ -39,7 +39,10 @@ class Const:
     def __delattr__(self, item):
         if item in self.__dict__:
             raise ValueError('cannot delete a const attribute')
-        raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, item))
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
+
+
+USE_GETATTR = True
 
 
 class Image:
@@ -51,40 +54,50 @@ class Image:
         self.__height = height
         self.__colors = {self.__background}
 
-    # This is easy to code but could become tedious if there are a lot of read-only
-    # properties.
-    @property
-    def width(self):
-        return self.__width
+    if USE_GETATTR:
+        def __getattr__(self, name):
+            if name == 'color':
+                return set(self.__colors)
+            classname = self.__class__.__name__
+            if name in frozenset({'background', 'width', 'height'}):
+                # image = Image(10, 10)
+                # image.__dict__
+                # {'filename': '',
+                #  '_Image__background': '#FFFFFF',
+                #  '_Image__data': {},
+                #  '_Image__width': 10,
+                #  '_Image__height': 10,
+                #  '_Image__colors': {'#FFFFFF'}}
+                return self.__dict__[f'_{classname}__{name}']
+            raise AttributeError(f"'{classname}' object has no attribute {name}")
+    else:
+        @property
+        def background(self):
+            return self.__background
 
-    # If we attempt to access an object’s attribute and the attribute is not found,
-    # Python will call the __getattr__() method (providing it is implemented, and
-    # that we have not reimplemented __getattribute__() ), with the name of the
-    # attribute as a parameter. Implementations of __getattr__() must raise an
-    # AttributeError exception if they do not handle the given attribute.
-    def __getattr__(self, name):
-        if name == 'colors':
+        @property
+        def width(self):
+            return self.__width
+
+        @property
+        def height(self):
+            return self.__height
+
+        @property
+        def colors(self):
             return set(self.__colors)
-        classname = self.__class__.__name__
-        if name in frozenset({'background', 'width', 'height'}):
-            # For private attributes (those whose
-            # name begins with two leading underscores), the name is mangled to have the
-            # form _className__attributeName , so we must account for this when retrieving
-            # the attribute’s value from the object’s private dictionary.
-            return self.__dict__['_{classname}__{name}'.format(**locals())]
-        raise AttributeError("'{classname}' object has no attribute '{name}'".format(**locals()))
 
 
 if __name__ == '__main__':
     ord = Ord()
-    print(ord.a)
-    print(ord.Z)
+    print(ord.a)  # 97
+    print(ord.Z)  # 90
 
     const = Const()
     const.limit = 591
     print(const.limit)
-    # const.limit = 1
-    # del const.limit
+    # const.limit = 1  # ValueError: cannot change a const attribute
+    # del const.limit  # ValueError: cannot delete a const attribute
 
     Const = collections.namedtuple('_', 'min max')(191, 591)  # throwaway name for the named tuple
     print(Const.min, Const.max)

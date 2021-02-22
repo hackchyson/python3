@@ -1,7 +1,16 @@
 import os
 import sys
+import functools
 
-from chyson.decorators.coroutine import coroutine
+
+def coroutine(function):
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        generator = function(*args, **kwargs)
+        next(generator)
+        return generator
+
+    return wrapper
 
 
 @coroutine
@@ -48,15 +57,24 @@ def size_matcher(receiver, minimum=None, maximum=None):
 
 if __name__ == '__main__':
     # notice the order in coroutine
-    receiver = reporter()
-    pipeline = size_matcher(receiver, minimum=1024)
-    pipeline = suffix_matcher(pipeline, (".png", ".jpg", ".jpeg"))
-    pipeline = get_files(pipeline)
+    pipes = []
+    pipes.append(reporter)
+    pipes.append(size_matcher(pipes[-1], minimum=1024))
+    pipes.append(suffix_matcher(pipes[-1], (".png", ".jpg", ".jpeg", ".py")))
+    pipes.append(get_files(pipes[-1]))
+    pipeline = pipes[-1]
+    # Equal to
+    # pipeline = get_files(suffix_matcher(size_matcher(reporter(), minimum=1024), (".png", ".jpg", ".jpeg", ".py")))
 
     try:
         for file in sys.argv[1:]:
             print(file)
             pipeline.send(file)
+            # pipeline.py
+            # /Users/mike/PycharmProjects/python3/c8_advanced_programming_techniques/functional_programming/pipeline.py
+            # partial.py
+            # /Users/mike/PycharmProjects/python3/c8_advanced_programming_techniques/functional_programming/partial.py
+            # __init__.py
     finally:
-        pipeline.close()
-        receiver.close()
+        for pipe in pipes:
+            pipe.close()

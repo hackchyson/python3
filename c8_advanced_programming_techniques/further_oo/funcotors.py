@@ -44,22 +44,24 @@ class Person:
         return 'Person({}, {}, {})'.format(self.forename, self.surname, self.email)
 
 
-if __name__ == '__main__':
-    # We could achieve the same thing using a plain function or lambda, but if we
-    # need to store a bit more state or perform more complex processing, a functor is
-    # often the right solution.
-    strip_punctuation = Strip(',;:.!?')
-    print(strip_punctuation('Land ahoy!'))
+# if __name__ == '__main__':
+# We could achieve the same thing using a plain function or lambda, but if we
+# need to store a bit more state or perform more complex processing, a functor is
+# often the right solution.
+strip_punctuation = Strip(',;:.!?')
+print(strip_punctuation('Mike Chyson!'))  # Mike Chyson
 
-    strip_punctuation = make_strip_function(',;:.!?')
-    print(strip_punctuation('Land ahoy!'))
+strip_punctuation = make_strip_function(',;:.!?')
+print(strip_punctuation('Mike Chyson!'))  # Mike Chyson
 
-    people = []
-    people.append(Person('Hack', 'Chyson', 'chyson@aliyun.com'))
-    people.append(Person('A', 'B', 'c@d.com'))
-    people.sort(key=SortedKey('surname', 'forename'))  # in sort method, the person object is passed as the instance
-    for i in people:
-        print(i)
+people = []
+people.append(Person('Hack', 'Chyson', 'chyson@aliyun.com'))
+people.append(Person('A', 'B', 'c@d.com'))
+people.sort(key=SortedKey('surname', 'forename'))  # in sort method, the person object is passed as the instance
+for i in people:
+    print(i)
 
-    # this can be achieved with operator module without creating a class
-    people.sort(key=operator.attrgetter('surname', 'forename'))
+# this can be achieved with operator module without creating a class
+people.sort(key=operator.attrgetter('surname', 'forename'))
+
+

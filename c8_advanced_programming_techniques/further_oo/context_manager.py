@@ -55,30 +55,17 @@ class AtomicList:
         self.shallow_copy = shallow_copy
 
     def __enter__(self):
-        # Shallow copying is fine for
-        # lists of numbers or strings; but for lists that contain lists or other collections,
-        # shallow copying is not sufficient.
         self.modified = (self.original[:] if self.shallow_copy else copy.deepcopy(self.original))
         return self.modified
 
-    # The return value of __exit__() is used to indicate whether any exception that
-    # occurred should be propagated. A True value means that we have handled any
-    # exception and so no propagation should occur. Normally we always return
-    # False or something that evaluates to False in a Boolean context to allow any
-    # exception that occurred to propagate. By not giving an explicit return value,
-    # our __exit__() returns None which evaluates to False and correctly causes any
-    # exception to propagate.
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:  # exception type
-            # We cannot do self.original = self.modified because that
-            # would just replace one object reference with another and would not affect the
-            # original list at all.
             self.original[:] = self.modified
 
 
+items = list(range(10))
+index = 5
 try:
-    items = list(range(10))
-    index = 5
     with AtomicList(items) as atomic:
         atomic.append(1111)
         del atomic[3]

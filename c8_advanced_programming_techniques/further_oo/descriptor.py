@@ -3,29 +3,17 @@
 # as a property, but we also want to get an XML-escaped version of the strings
 # whenever we want.
 import defusedxml
+from xml.sax.saxutils import escape
 
 
-def fake_process(line):
-    return 'processed: {}'.format(line)
-
-
-# descriptors used to generate data without necessarily storing it
 class XmlShadow:
     def __init__(self, attribute_name):
         self.attribute_name = attribute_name
 
-    # instance is the Product instance
-    # owner is the owning class (Product class)
     def __get__(self, instance, owner=None):
-        # The XML modules are not secure against erroneous or maliciously constructed data.
-        # If you need to parse untrusted or unauthenticated data see XML vulnerabilities.
-        # return xml.sax.saxutils.escape(getattr(instance, self.attribute_name))
-        return fake_process(getattr(instance, self.attribute_name))
+        return escape(getattr(instance, self.attribute_name))
 
 
-# If the use case was that only a small proportion of the products were accessed
-# for their XML strings, but the strings were often long and the same ones were
-# frequently accessed, we could use a cache.
 class CachedXmlShadow:
     def __init__(self, attribute_name):
         self.attribute_name = attribute_name
@@ -35,26 +23,39 @@ class CachedXmlShadow:
         xml_text = self.cache.get(id(instance))
         if xml_text is not None:
             return xml_text
-        # The key is necessary because descriptors are created per class
-        # rather than per instance.
-        #         Insert key with a value of default if key is not in the dictionary.
-        #         Return the value for key if key is in the dictionary, else default.
-        # return self.cache.setdefault(id(instance), xml.sax.saxutils.escape(getattr(instance, self.attribute_name)))
-        return self.cache.setdefault(id(instance), fake_process(getattr(instance, self.attribute_name)))
+        return self.cache.setdefault(id(instance), escape(getattr(instance, self.attribute_name)))
 
 
 class Product:
-    __slots__ = ('name', 'description', 'price')
-    # The name_as_xml and description_as_xml class attributes are
-    # set to be instances of the XmlShadow descriptor.
+    __slots__ = ('__name', '__description', '__price')
 
     name_as_xml = XmlShadow('name')
     description_as_xml = XmlShadow('description')
 
     def __init__(self, name, description, price):
-        self.name = name
-        self.description = description
-        self.price = price
+        self.__name = name
+        self.__description = description
+        self.__price = price
+
+    @property
+    def name(self):
+        return self.__name
+
+    @property
+    def description(self):
+        return self.__description
+
+    @description.setter
+    def description(self, description):
+        self.__description = description
+
+    @property
+    def price(self):
+        return self.__price
+
+    @price.setter
+    def price(self, price):
+        self.__price = price
 
 
 # descriptor that can be used to store all of an object’s at-
@@ -70,11 +71,12 @@ class ExternalStorage:
         self.__storage[id(instance), self.attribute_name] = value
 
     def __get__(self, instance, owner):
-        # if we have p = Point(3, 4) , we can
-        # access the x-coordinate with p.x , and we can access the ExternalStorage object
-        # that holds all the x s with Point.x .
         if instance is None:
-            return self
+            d = {}
+            for k in self.__storage.keys():
+                if self.attribute_name in k:
+                    d[k] = self.__storage[k]
+            return d
         return self.__storage[id(instance), self.attribute_name]
 
     def __str__(self):
@@ -93,20 +95,12 @@ class Point:
         self.y = y
 
 
-# self defined property
 class Property:
     def __init__(self, getter, setter=None):
         self.__getter = getter
         self.__setter = setter
         self.__name__ = getter.__name__
 
-    # At first sight,
-    # self.__getter() looks like a method call, but it is not. In fact, self.__getter
-    # is an attribute, one that happens to hold an object reference to a method
-    # that was passed in. So what happens is that first we retrieve the attribute
-    # ( self.__getter ), and then we call it as a function () . And because it is called as
-    # a function rather than as a method we must pass in the relevant self object
-    # explicitly ourselves.
     def __get__(self, instance, owner=None):
         if instance is None:
             return self
@@ -114,7 +108,7 @@ class Property:
 
     def __set__(self, instance, value):
         if self.__setter is None:
-            raise AttributeError("'{}' is read-only".format(self.__name__))
+            raise AttributeError(f"'{self.__name__}' is read-only")
         return self.__setter(instance, value)
 
     def setter(self, setter):
@@ -123,7 +117,6 @@ class Property:
 
 
 class NameAndExtension:
-
     def __init__(self, name, extension):
         self.__name = name
         self.extension = extension
@@ -134,7 +127,7 @@ class NameAndExtension:
 
     @Property
     def extension(self):
-        return self.__extension  # todo ?
+        return self.__extension
 
     @extension.setter
     def extension(self, extension):
@@ -147,15 +140,18 @@ if __name__ == '__main__':
     # and so uses the descriptor to get the attribute’s value.
 
     product = Product("Chisel <3cm>", "Chisel & cap", 45.25)
-    print(product.name, product.name_as_xml, product.description_as_xml)
+    print(product.name, product.name_as_xml, product.description_as_xml, sep='\n')
+    # Chisel <3cm>
+    # Chisel &lt;3cm&gt;
+    # Chisel &amp; cap
 
     p = Point(3, 4)
-    print(p.x, p.y)
+    print(p.x, p.y)  # 3 4
     p = Point(1, 2)
-    print(p.x, p.y)
+    print(p.x, p.y)  # 1 2
     print(Point.x, Point.y, Point, sep='\n')
-    # {(139973669757216, 'x'): 3, (139973669757216, 'y'): 4, (139973669757328, 'x'): 1, (139973669757328, 'y'): 2}
-    # {(139973669757216, 'x'): 3, (139973669757216, 'y'): 4, (139973669757328, 'x'): 1, (139973669757328, 'y'): 2}
+    # {(140338432304624, 'x'): 3, (140338432304640, 'x'): 1}
+    # {(140338432304624, 'y'): 4, (140338432304640, 'y'): 2}
     # <class '__main__.Point'>
 
     print('=' * 100)
