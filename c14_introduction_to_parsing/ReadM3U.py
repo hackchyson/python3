@@ -1,3 +1,6 @@
+"""
+Handcraft parsing M3U format.
+"""
 import re
 import collections
 

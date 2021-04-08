@@ -1,3 +1,6 @@
+"""
+Handcraft parsing playlist format.
+"""
 import re
 
 """
